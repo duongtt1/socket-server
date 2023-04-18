@@ -1,3 +1,4 @@
+require('dotenv').config();
 const cluster = require("cluster");
 const http = require("http");
 const express = require("express");
@@ -8,9 +9,13 @@ const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
 const Redis = require("ioredis");
 const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
+const compression = require('compression');
+const helmet = require('helmet');
 
-const REDIS_HOST = 'localhost';
-const REDIS_PORT = 6379;
+const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+const REDIS_PORT = process.env.REDIS_PORT || 6379;
+const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
 
 const redisClient = new Redis({
     host: REDIS_HOST,
@@ -36,6 +41,8 @@ const limiter = rateLimit({
     }),
 });
 
+app.use(compression());
+app.use(helmet());
 app.use(limiter);
 
 if (cluster.isMaster) {
@@ -47,15 +54,9 @@ if (cluster.isMaster) {
 
     setupPrimary();
 
-    // needed for packets containing buffers (you can ignore it if you only send plaintext objects)
-    // Node.js < 16.0.0
     cluster.setupMaster({
         serialization: "advanced",
     });
-    // Node.js > 16.0.0
-    // cluster.setupPrimary({
-    //   serialization: "advanced",
-    // });
 
     httpServer.listen(3000);
 
@@ -77,7 +78,7 @@ if (cluster.isMaster) {
     setupWorker(io);
 
     io.on('connection', (socket) => {
-        console.log(`Socket connected: ${socket.id} in worker ${workerId}`);
+        console.log(`Socket connected: ${socket.id} in worker ${process.pid}`);
 
         socket.on('message', (data) => {
             console.log(`Received message: ${data}`);
@@ -85,7 +86,7 @@ if (cluster.isMaster) {
         });
 
         socket.on('disconnect', () => {
-            console.log(`Socket disconnected: ${socket.id} in worker ${workerId}`);
+            console.log(`Socket disconnected: ${socket.id} in worker ${process.pid}`);
         });
     });
 }
