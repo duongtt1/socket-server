@@ -27,9 +27,9 @@ const httpServer = http.createServer(app);
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100, 
-    standardHeaders: true, 
-    legacyHeaders: false, 
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
     store: new RedisStore({
         sendCommand: function () {
             var args = [];
@@ -65,7 +65,7 @@ if (cluster.isMaster) {
     }
 
     cluster.on("exit", (worker) => {
-        console.log(`Worker ${worker.process.pid} died`);
+        console.log(`Worker ${worker.processripid} died`);
         cluster.fork();
     });
 } else {
@@ -82,7 +82,12 @@ if (cluster.isMaster) {
 
         socket.on('message', (data) => {
             console.log(`Received message: ${data}`);
-            io.emit('message', data);
+            io.emit('client2', data);
+        });
+
+        socket.on('testsendfromappteacher', (data) => { 
+            console.log(`Received message: ${data}`);
+            io.emit('sendtotools', data);
         });
 
         socket.on('disconnect', () => {
