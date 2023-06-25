@@ -77,21 +77,32 @@ if (cluster.isMaster) {
 
     setupWorker(io);
 
-    io.on('connection', (socket) => {
-        console.log(`Socket connected: ${socket.id} in worker ${process.pid}`);
+    // io.on('connection', (socket) => {
+    //     console.log(`Socket connected: ${socket.id} in worker ${process.pid}`);
 
-        socket.on('message', (data) => {
-            console.log(`Received message: ${data}`);
-            io.emit('client2', data);
-        });
+    //     socket.on('message', (data) => {
+    //         console.log(`Received message: ${data}`);
+    //         io.emit('client2', data);
+    //     });
 
-        socket.on('testsendfromappteacher', (data) => { 
-            console.log(`Received message: ${data}`);
-            io.emit('sendtotools', data);
-        });
+    //     socket.on('testsendfromappteacher', (data) => { 
+    //         console.log(`Received message: ${data}`);
+    //         io.emit('sendtotools', data);
+    //     });
 
-        socket.on('disconnect', () => {
-            console.log(`Socket disconnected: ${socket.id} in worker ${process.pid}`);
-        });
+    //     socket.on('disconnect', () => {
+    //         console.log(`Socket disconnected: ${socket.id} in worker ${process.pid}`);
+    //     });
+    // });
+    io.on("connection", (socket) => {
+        socket.on("echo", (msg) => {
+            socket.emit("echoResponse", msg);
+        })
+
+        socket.on("userDetails", (_, callback) => {
+            callback({
+                name: "Artillery"
+            });
+        })
     });
 }
