@@ -58,7 +58,7 @@ if (cluster.isMaster) {
         serialization: "advanced",
     });
 
-    httpServer.listen(3000);
+    httpServer.listen(process.env.PORT);
 
     for (let i = 0; i < numCPUs; i++) {
         cluster.fork();
